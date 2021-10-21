@@ -3,9 +3,7 @@ import * as state from "./store";
 import Navigo from "navigo";
 import { capitalize } from "lodash";
 import axios from "axios";
-import dotenv from "dotenv";
 
-dotenv.config();
 
 const router = new Navigo(window.location.origin);
 
@@ -15,10 +13,11 @@ router.hooks({
       params && params.hasOwnProperty("page")
         ? capitalize(params.page)
         : "Home";
+
     if (page === "Home") {
       axios
         .get(
-          `https://api.openweathermap.org/data/2.5/weather?appid=${process.env.OPEN_WEATHER_MAP_API_KEY}&q=st.%20louis`
+          `https://api.openweathermap.org/data/2.5/weather?appid=fbb30b5d6cf8e164ed522e5082b49064&q=st.%20louis`
         )
         .then(response => {
           state.Home.weather = {};
@@ -83,4 +82,39 @@ function addEventListeners(st) {
     .addEventListener("click", () =>
       document.querySelector("nav > ul").classList.toggle("hidden--mobile")
     );
+
+  if (st.page === "Order") {
+      document.querySelector("form").addEventListener("submit", event => {
+        event.preventDefault();
+
+        const inputList = event.target.elements;
+
+        const toppings = [];
+        for (let input of inputList.toppings) {
+          if (input.checked) {
+            toppings.push(input.value);
+          }
+        }
+
+        const requestData = {
+          crust: inputList.crust.value,
+          cheese: inputList.cheese.value,
+          sauce: inputList.sauce.value,
+          toppings: toppings
+        };
+        console.log("request Body", requestData);
+
+        axios
+        .post(`${process.env.PIZZA_PLACE_API_URL}`, requestData)
+        .then(response => {
+          state.Pizza.pizzas.push(response.data);
+          router.navigate("/Pizza");
+        })
+        .catch(error => {
+          console.log("It puked", error);
+        });
+      });
+    }
+
 }
+
